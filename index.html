@@ -6,7 +6,7 @@
      ============================================================ -->
 <script>
 const SCRIPT_URL  = "https://script.google.com/macros/s/AKfycbyYTSxeQeClWmuCN7fOeIgL6XzHZPaW1Esj2iNS0OM1hO6KgDMjOVZObOOKU5IY91i0Kg/exec";
-const APP_VERSION = "v1";
+const APP_VERSION = "v2";
 const EDITOR_PIN  = "1234";
 </script>
 <!-- ============================================================ -->
@@ -641,6 +641,20 @@ function setView(v) {
   render();
 }
 function setStatModal(m) { statModal = m; render(); }
+function jumpToItem(itemId) {
+  const item = items.find(i => i.id === itemId);
+  if (!item) return;
+  view = "overblik"; statModal = null;
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("nav-overblik")?.classList.add("active");
+  adjustModeId = itemId; minEditId = null; batchEditId = null;
+  openGroupKey = groupBy === "type" ? item.type : item.plads;
+  render();
+  setTimeout(() => {
+    const el = document.getElementById("item-card-" + itemId);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 80);
+}
 
 // ── Render ─────────────────────────────────────────────────
 function render() {
@@ -708,7 +722,8 @@ function renderOverblik() {
           </div>
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-family:'Courier Prime',monospace;font-size:17px;font-weight:700;color:#38bdf8">${item.plads}</span>
-            <span style="font-family:'Courier Prime',monospace;font-size:28px;font-weight:700;color:#f87171;cursor:pointer" onclick="openBatch('${item.id}',0,event)" title="Klik for at tilføje">0</span>
+            ${isEditor ? `<span style="font-family:'Courier Prime',monospace;font-size:28px;font-weight:700;color:#f87171;cursor:pointer" onclick="openBatch('${item.id}',0,event)" title="Klik for at tilføje">0</span>`
+                       : `<span style="font-family:'Courier Prime',monospace;font-size:28px;font-weight:700;color:#f87171">0</span>`}
           </div>
         </div>`;
       }
@@ -774,14 +789,20 @@ function renderItemCard(item) {
   const typeCol = TYPE_COLORS[item.type] || "#6b7280";
   const stockCol = item.stock <= 0 ? "#f87171" : "#f1f5f9";
   const buyActive = item.wantToBuy;
+  const isRedAge = item.ageDays !== null && ageColor(item.ageDays) === "#ef4444";
+  const ageBadgeInCard = item.ageDays !== null
+    ? (isRedAge
+        ? `<span class="item-age" style="color:#ef4444;background:#fff;border-radius:5px;padding:1px 5px;line-height:1.4">⬤ ${ageLabel(item.ageDays)}</span>`
+        : `<span class="item-age" style="color:${col}">⬤ ${ageLabel(item.ageDays)}</span>`)
+    : "";
 
-  let html = `<div class="item-card">
+  let html = `<div class="item-card" id="item-card-${item.id}">
     <div class="item-row">
       <div style="flex:1;min-width:0">
         <div style="margin-bottom:3px"><span class="item-name">${item.name}</span></div>
         <div class="item-meta">
           <span class="item-type-badge" style="color:${typeCol};background:${typeCol}22">${item.type}</span>
-          ${item.ageDays !== null ? `<span class="item-age" style="color:${col}">⬤ ${ageLabel(item.ageDays)}</span>` : ""}
+          ${ageBadgeInCard}
           <div style="flex:1"></div>
           ${item.need > 0 ? `<span class="item-min-text" style="color:${item.stock<item.need?'#fbbf24':'#c8daf0'}">min ${item.need}</span>` : ""}
           ${isEditor ? `<button class="btn-sm adjust${isAdjusting?" active":""}" onclick="toggleAdjust('${item.id}')">Juster</button>` : ""}
@@ -823,19 +844,27 @@ function renderItemCard(item) {
 function renderOldest() {
   const enriched = getEnrichedItems().filter(i => i.stock > 0 && i.ageDays !== null)
     .sort((a,b) => b.ageDays - a.ageDays);
-  let html = `<div class="section-pad"><div class="section-note">Ældste varer øverst — FIFO</div>`;
+  let html = `<div class="section-pad"><div class="section-note">Ældste varer øverst — FIFO · Klik for at justere</div>`;
   enriched.forEach(item => {
-    html += `<div style="background:#111d35;border-radius:12px;padding:8px 12px;margin-bottom:4px;border:1px solid #1e3a5f">
+    const ac = ageColor(item.ageDays);
+    const isRed = ac === "#ef4444";
+    const ageBadge = isRed
+      ? `<span style="font-size:13px;font-weight:700;color:#ef4444;background:#fff;border-radius:6px;padding:1px 6px;line-height:1.4">⬤ ${ageLabel(item.ageDays)}</span>`
+      : `<span style="font-size:13px;color:${ac};font-weight:600">⬤ ${ageLabel(item.ageDays)}</span>`;
+    html += `<div onclick="jumpToItem('${item.id}')" style="background:#111d35;border-radius:12px;padding:8px 12px;margin-bottom:4px;border:1px solid #1e3a5f;cursor:pointer">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">${item.name}</div>
           <div style="display:flex;gap:8px;align-items:center">
             <span style="font-size:12px;color:#38bdf8;font-family:'Courier Prime',monospace;font-weight:700">${item.plads}</span>
-            <span style="font-size:13px;color:${ageColor(item.ageDays)};font-weight:600">⬤ ${ageLabel(item.ageDays)}</span>
+            ${ageBadge}
             <span style="font-size:13px;color:#c8daf0">${formatDateShort(item.oldestDate)}</span>
           </div>
         </div>
-        <div style="font-family:'Courier Prime',monospace;font-size:22px;font-weight:700;margin-left:12px;flex-shrink:0">${item.stock}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-left:12px;flex-shrink:0">
+          <div style="font-family:'Courier Prime',monospace;font-size:22px;font-weight:700">${item.stock}</div>
+          <span style="font-size:16px;color:#7090a8">›</span>
+        </div>
       </div>
     </div>`;
   });
@@ -1087,6 +1116,10 @@ function renderSettingsContent() {
         </div>
       </div>`;
     });
+    html += `<div class="age-band-row" style="margin-top:2px">
+      <div class="age-dot" style="background:#ef4444"></div>
+      <div class="age-label">Over orange — <span style="color:#ef4444;background:#fff;border-radius:5px;padding:1px 6px;font-weight:700">rød</span></div>
+    </div>`;
     html += `<button onclick="resetThresholds()" style="margin-top:14px;padding:7px 14px;font-size:13px;background:#172642;color:#c8daf0;border:1px solid #2a4a6e;border-radius:7px;cursor:pointer">Nulstil (1/3/6 mdr)</button>`;
     el.innerHTML = html;
   }
