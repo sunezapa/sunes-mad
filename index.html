@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<!-- ============================================================
+     KONFIGURATION — ret her ved ny deploy eller ny version
+     ============================================================ -->
+<script>
+const SCRIPT_URL  = "https://script.google.com/macros/s/AKfycbyYTSxeQeClWmuCN7fOeIgL6XzHZPaW1Esj2iNS0OM1hO6KgDMjOVZObOOKU5IY91i0Kg/exec";
+const APP_VERSION = "v1";
+const EDITOR_PIN  = "1234";
+</script>
+<!-- ============================================================ -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>SunesMad</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; font-feature-settings: "zero" 0; font-variant-numeric: normal; }
+  body { background: #0a1628; color: #f1f5f9; font-family: 'DM Sans', sans-serif; max-width: 480px; margin: 0 auto; min-height: 100vh; padding-bottom: 90px; }
+  button { border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 600; transition: all 0.15s ease; border-radius: 10px; }
+  input, select { font-family: 'DM Sans', sans-serif; }
+  ::-webkit-scrollbar { display: none; }
+
+  #header { position: sticky; top: 0; z-index: 50; background: rgba(10,22,40,0.93); backdrop-filter: blur(20px); border-bottom: 1px solid #1e3a5f; padding: 12px 16px; }
+  #header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  #header-title { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; }
+  #header-actions { display: flex; gap: 8px; }
+  #search-input { width: 100%; padding: 8px 12px; border-radius: 10px; border: 1px solid #1e3a5f; background: #172642; color: #f1f5f9; font-size: 14px; outline: none; }
+  #sync-status { font-size: 10px; color: #e2eaf4; margin-top: 4px; }
+  #sync-error { font-size: 11px; color: #f87171; margin-top: 4px; }
+
+  #content { padding: 12px 0; }
+  .stat-row { display: flex; gap: 6px; padding: 0 16px 12px; }
+  .stat-card { flex: 1; background: #111d35; border-radius: 12px; padding: 8px 10px; border: 1px solid #1e3a5f; cursor: pointer; text-align: left; font-family: inherit; }
+  .stat-card.active { background: #1e2d4a; border-color: #2a4a6e; }
+  .stat-label { font-size: 10px; color: #dbeafe; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+  .stat-val { font-family: 'Courier Prime', monospace; font-size: 26px; font-weight: 700; line-height: 1.1; margin-top: 2px; }
+  .type-chips { display: flex; gap: 6px; padding: 0 16px 12px; flex-wrap: wrap; }
+  .type-chip { padding: 5px 11px; font-size: 13px; border-radius: 20px; border: 1px solid #2a4a6e; background: #172642; color: #c8daf0; cursor: pointer; white-space: nowrap; font-weight: 700; }
+  .type-chip.active { color: #fff; }
+  .groupby-btns { display: flex; gap: 6px; padding: 0 16px 16px; }
+  .groupby-btn { padding: 6px 16px; font-size: 13px; background: #2a2010; color: #e8d8b0; border: 1px solid #4a3a10; cursor: pointer; letter-spacing: 0.5px; font-weight: 700; border-radius: 10px; }
+  .groupby-btn.active { background: #f59e0b; color: #0a0a00; border-color: #f59e0b; }
+
+  .group-header { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #e8f0f8; border-radius: 12px; border: 1px solid #2a4a6e; color: #0a1628; margin-bottom: 4px; cursor: pointer; font-family: inherit; }
+  .group-key { font-family: 'Courier Prime', monospace; font-weight: 700; font-size: 20px; color: #0d2a4a; }
+  .group-meta { font-size: 13px; color: #1a3a5a; font-weight: 600; margin-left: 8px; }
+
+  .item-card { background: #111d35; border-radius: 12px; padding: 8px 12px; margin-bottom: 4px; border: 1px solid #1e3a5f; }
+  .item-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .item-name { font-weight: 700; font-size: 19px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item-meta { display: flex; gap: 8px; align-items: center; margin-top: 3px; flex-wrap: nowrap; }
+  .item-plads { font-size: 12px; color: #38bdf8; font-family: 'Courier Prime', monospace; font-weight: 700; }
+  .item-type-badge { font-size: 12px; padding: 2px 7px; border-radius: 6px; }
+  .item-age { font-size: 13px; }
+  .item-min-text { font-size: 11px; font-family: 'Courier Prime', monospace; font-weight: 700; }
+  .item-buy-btn { padding: 2px 9px; font-size: 11px; border-radius: 8px; background: rgba(251,191,36,0.1); color: #fcd34d; border: 1px solid rgba(251,191,36,0.3); cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .item-buy-btn.active { background: rgba(56,189,248,0.2); color: #38bdf8; border-color: #38bdf8; }
+  .item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: 8px; }
+  .item-plads-tag { font-family: 'Courier Prime', monospace; font-size: 17px; font-weight: 700; color: #38bdf8; min-width: 32px; text-align: right; }
+  .item-stock { font-family: 'Courier Prime', monospace; font-size: 28px; font-weight: 700; min-width: 36px; text-align: right; cursor: pointer; }
+  .item-stock:hover { color: #38bdf8 !important; }
+  .batch-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; background: #0d1e36; border-radius: 10px; padding: 8px 10px; border: 1px solid #2a4a6e; }
+  .batch-input { width: 64px; font-family: 'Courier Prime', monospace; font-size: 26px; font-weight: 700; background: #172642; color: #f1f5f9; border: 1px solid #38bdf8; border-radius: 8px; text-align: center; padding: 4px 0; outline: none; }
+  .batch-label { font-size: 11px; color: #c8daf0; flex: 1; }
+  .btn-batch-ok { padding: 8px 16px; background: #38bdf8; color: #fff; font-size: 13px; border-radius: 8px; }
+  .btn-batch-cancel { padding: 8px 12px; background: #172642; color: #c8daf0; font-size: 13px; border-radius: 8px; border: 1px solid #2a4a6e; }
+  .btn-sm { padding: 4px 8px; font-size: 11px; background: #172642; color: #c8daf0; border: 1px solid #1e3a5f; }
+  .btn-sm.adjust { background: rgba(52,211,153,0.12); color: #6ee7b7; border-color: rgba(52,211,153,0.3); }
+  .btn-sm.adjust.active { background: rgba(52,211,153,0.25); color: #34d399; border-color: rgba(52,211,153,0.5); }
+  .btn-sm.buy { background: rgba(251,191,36,0.12); color: #fcd34d; border-color: rgba(251,191,36,0.3); }
+  .btn-sm.active { background: #38bdf8; color: #fff; border-color: #38bdf8; }
+  .adjust-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .btn-plus { width: 40px; height: 40px; background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .btn-minus { width: 40px; height: 40px; background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .btn-min-edit { padding: 8px 14px; font-size: 14px; font-weight: 700; background: #172642; color: #f1f5f9; border: 1px solid #38bdf8; font-family: 'Courier Prime', monospace; }
+  .btn-stepper { width: 40px; height: 40px; background: #172642; color: #f1f5f9; border: 1px solid #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+  .section-pad { padding: 0 16px; }
+  .section-note { font-size: 12px; color: #dbeafe; margin-bottom: 12px; }
+  .history-row { padding: 3px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #0e1a2e; min-height: 28px; }
+  .history-row.even { background: #111d35; }
+  .history-row.odd  { background: #0e1a2e; }
+  .history-date { font-size: 11px; color: #c8daf0; white-space: nowrap; flex-shrink: 0; }
+  .history-name { font-weight: 600; font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-plads { font-family: 'Courier Prime', monospace; font-size: 15px; font-weight: 700; color: #38bdf8; flex-shrink: 0; }
+  .history-amount { font-family: 'Courier Prime', monospace; font-size: 18px; font-weight: 700; flex-shrink: 0; min-width: 36px; text-align: right; }
+
+  #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 12px; font-weight: 600; font-size: 14px; z-index: 2000; box-shadow: 0 8px 30px rgba(0,0,0,0.3); display: none; white-space: nowrap; }
+
+  #bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: #111d35; border-top: 1px solid #1e3a5f; display: flex; justify-content: space-around; padding: 8px 0 20px; z-index: 100; }
+  .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 16px; color: #c0cfe0; font-size: 10px; font-weight: 600; letter-spacing: 0.3px; cursor: pointer; border-radius: 0; }
+  .nav-btn.active { color: #38bdf8; }
+  .nav-btn svg { width: 20px; height: 20px; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: flex-start; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+  .modal-box { background: #111d35; border-radius: 0 0 20px 20px; padding: 20px 20px 28px; width: 100%; max-width: 480px; border: 1px solid #1e3a5f; border-top: none; max-height: 85vh; overflow-y: auto; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .btn-close { background: none; border: none; color: #c8daf0; font-size: 20px; cursor: pointer; padding: 4px; line-height: 1; border-radius: 6px; }
+  .settings-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .settings-tab { padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .settings-tab.active { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+  .settings-tab:not(.active) { background: #172642; color: #c8daf0; border: 1px solid #2a4a6e; }
+  .settings-label { font-size: 12px; color: #dbeafe; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .settings-input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #2a4a6e; background: #172642; color: #f1f5f9; font-size: 13px; outline: none; }
+  .settings-hint { font-size: 13px; color: #c8daf0; margin-top: 5px; margin-bottom: 12px; }
+  .btn-primary { padding: 10px 16px; background: #38bdf8; color: #fff; font-size: 13px; border-radius: 8px; }
+  .settings-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+  .settings-table td { padding: 12px 0; border-bottom: 1px solid #1e3a5f; }
+  .settings-table .td-key { font-family: "Courier Prime", monospace; font-size: 20px; color: #38bdf8; font-weight: 700; }
+  .settings-table .td-count { font-size: 15px; color: #c8daf0; padding-left: 12px; }
+  .btn-del { background: none; border: none; font-size: 20px; cursor: pointer; padding: 4px 10px; }
+  .add-row { display: flex; gap: 8px; }
+  .add-input { flex: 1; padding: 9px 12px; border-radius: 8px; border: 1px solid #2a4a6e; background: #172642; color: #f1f5f9; font-size: 14px; outline: none; }
+  .btn-add { padding: 9px 14px; background: #38bdf8; color: #fff; border-radius: 8px; font-size: 13px; }
+
+  .move-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .move-btn { padding: 12px 8px; border-radius: 10px; font-size: 14px; font-weight: 700; font-family: "Courier Prime", monospace; background: #172642; color: #a8c4e0; border: 1px solid #2a4a6e; cursor: pointer; }
+  .move-btn.current { background: rgba(56,189,248,0.2); color: #7dd3fc; border-color: rgba(56,189,248,0.5); opacity: 0.5; cursor: default; }
+
+  .add-item-form { display: flex; flex-direction: column; gap: 14px; }
+  .form-label { font-size: 13px; font-weight: 600; color: #c8daf0; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+  .form-input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #1e3a5f; background: #172642; color: #f1f5f9; font-size: 15px; outline: none; }
+  .form-select { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid #1e3a5f; background: #172642; color: #f1f5f9; font-size: 14px; outline: none; }
+  .form-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stepper { display: flex; align-items: center; gap: 8px; }
+  .stepper-val { font-family: "Courier Prime", monospace; font-size: 20px; font-weight: 700; min-width: 32px; text-align: center; }
+  .stepper-btn { width: 36px; height: 36px; border-radius: 10px; background: #172642; color: #f1f5f9; border: 1px solid #1e3a5f; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .btn-submit { padding: 14px 20px; font-size: 15px; border-radius: 10px; width: 100%; margin-top: 4px; }
+  .btn-submit.ready { background: linear-gradient(135deg, #38bdf8, #818cf8); color: #fff; box-shadow: 0 4px 15px rgba(56,189,248,0.25); }
+  .btn-submit.disabled { background: #172642; color: #c8daf0; cursor: not-allowed; }
+
+  .need-card { background: #111d35; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; }
+  .need-card.below-min { border: 1px solid rgba(251,191,36,0.4); }
+  .need-card:not(.below-min) { border: 1px solid #1e3a5f; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .spinning { animation: spin 1s linear infinite; }
+  .empty-state { text-align: center; color: #c8daf0; padding: 40px; font-size: 14px; }
+
+  .age-band-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .age-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .age-label { flex: 1; font-size: 13px; }
+  .age-stepper { display: flex; align-items: center; gap: 6px; }
+  .age-val { font-family: "Courier Prime", monospace; font-size: 13px; min-width: 48px; text-align: center; }
+
+  .sync-divider { border-top: 1px solid #1e3a5f; padding-top: 16px; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-top">
+    <div id="header-title" style="cursor:pointer" onclick="setView('overblik');document.getElementById('search-input').value='';render()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round">
+        <line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/>
+        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/><line x1="19.07" y1="4.93" x2="4.93" y2="19.07"/>
+        <line x1="12" y1="2" x2="9" y2="5"/><line x1="12" y1="2" x2="15" y2="5"/>
+        <line x1="12" y1="22" x2="9" y2="19"/><line x1="12" y1="22" x2="15" y2="19"/>
+      </svg>
+      SunesMad
+    </div>
+    <div id="header-actions">
+      <button onclick="syncFromSheet()" id="btn-sync" style="padding:6px 10px;background:#172642;color:#38bdf8;border:1px solid #1e3a5f;display:flex;align-items:center;justify-content:center;width:38px;height:38px;">
+        <svg id="sync-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      <button onclick="openSettings()" style="padding:6px;background:#172642;color:#c8daf0;border:1px solid #1e3a5f">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+      <button onclick="openAddItem()" id="btn-add-item" style="padding:6px 12px;background:linear-gradient(135deg,#38bdf8,#818cf8);color:#fff;box-shadow:0 4px 15px rgba(56,189,248,0.3)">+ Vare</button>
+    </div>
+  </div>
+  <input id="search-input" type="text" placeholder="Søg vare, plads, type..." oninput="render()">
+  <div id="sync-error" style="display:none"></div>
+  <div id="sync-status"></div>
+</div>
+
+<div id="content"></div>
+
+<div id="toast"></div>
+
+<div id="bottom-nav">
+  <button class="nav-btn active" id="nav-overblik" onclick="setView('overblik');document.getElementById('search-input').value='';render()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Overblik
+  </button>
+  <button class="nav-btn" id="nav-oldest" onclick="setView('oldest')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Ældst
+  </button>
+  <button class="nav-btn" id="nav-need" onclick="setView('need')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+    Indkøb
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="setView('history')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Historik
+  </button>
+</div>
+
+<!-- Settings Modal -->
+<div id="modal-settings" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeSettings()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Indstillinger</div>
+      <button class="btn-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="settings-tabs">
+      <button class="settings-tab active" id="stab-generelt" onclick="setSettingsTab('generelt')">Generelt</button>
+      <button class="settings-tab" id="stab-pladser" onclick="setSettingsTab('pladser')">Pladser</button>
+      <button class="settings-tab" id="stab-typer" onclick="setSettingsTab('typer')">Typer</button>
+      <button class="settings-tab" id="stab-alder" onclick="setSettingsTab('alder')">Alder</button>
+    </div>
+    <div id="settings-content"></div>
+  </div>
+</div>
+
+<!-- Move Modal -->
+<div id="modal-move" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeMoveModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div>
+        <div style="font-size:16px;font-weight:700">Flyt vare</div>
+        <div id="move-subtitle" style="font-size:13px;color:#c8daf0;margin-top:2px"></div>
+      </div>
+      <button class="btn-close" onclick="closeMoveModal()">✕</button>
+    </div>
+    <div id="move-grid" class="move-grid"></div>
+  </div>
+</div>
+
+<!-- Add Item Modal -->
+<div id="modal-add" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeAddItem()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div style="font-size:18px;font-weight:700">Tilføj ny vare</div>
+      <button class="btn-close" onclick="closeAddItem()">✕</button>
+    </div>
+    <div class="add-item-form">
+      <div>
+        <label class="form-label">Varenavn</label>
+        <input id="new-name" class="form-input" placeholder="F.eks. Flæskesteg" oninput="updateAddBtn()">
+      </div>
+      <div class="form-grid2">
+        <div>
+          <label class="form-label">Plads</label>
+          <select id="new-plads" class="form-select"></select>
+        </div>
+        <div>
+          <label class="form-label">Type</label>
+          <select id="new-type" class="form-select"></select>
+        </div>
+      </div>
+      <div class="form-grid2">
+        <div>
+          <label class="form-label">Antal</label>
+          <div class="stepper">
+            <button class="stepper-btn" onclick="adjustNew('amount',-1)">−</button>
+            <span class="stepper-val" id="new-amount-val">1</span>
+            <button class="stepper-btn" onclick="adjustNew('amount',1)">+</button>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Minimum</label>
+          <div class="stepper">
+            <button class="stepper-btn" onclick="adjustNew('need',-1)">−</button>
+            <span class="stepper-val" id="new-need-val" style="color:#c8daf0">0</span>
+            <button class="stepper-btn" onclick="adjustNew('need',1)">+</button>
+          </div>
+        </div>
+      </div>
+      <button id="btn-submit-add" class="btn-submit disabled" onclick="submitAddItem()" disabled>Tilføj vare</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+
+// ── State ──────────────────────────────────────────────────
+let items = [];
+let inventory = [];
+let locations = ["IND1","IND2","IND3","KumK","KumX","Kum1","Kum9","UDE1","UDE2","UDE3","UDE4"];
+let types = ["BÆR","Dessert","Færdig","GRØNT","IS","Kød","Mad","most","PÅLÆG"];
+let ageThresholds = { green: 30, yellow: 90, orange: 180 };
+let scriptUrl = SCRIPT_URL;
+let lastSync = null;
+let syncing = false;
+let syncQueue = [];
+let view = "overblik";
+let groupBy = "plads";
+let typeFilter = null;
+let adjustModeId = null;
+let minEditId = null;
+let batchEditId = null;
+let batchValue = 0;
+let moveItemId = null;
+let settingsTab = "generelt";
+let newItemState = { amount: 1, need: 0 };
+let statModal = null;
+let openGroupKey = null;
+
+// ── PIN / redaktør-tilstand ────────────────────────────────
+// Skift EDITOR_PIN + re-deploy Apps Script for at tilbagekalde adgang.
+
+let isEditor = false;
+
+const TYPE_COLORS = {
+  "BÆR":"#a855f7","Færdig":"#f97316","PÅLÆG":"#ec4899",
+  "GRØNT":"#22c55e","KØD":"#ef4444","Kød":"#ef4444",
+  "BRØD":"#eab308","IS":"#06b6d4","ANDET":"#6b7280",
+  "Dessert":"#f43f5e","Mad":"#84cc16","most":"#0ea5e9",
+};
+
+// ── Storage ────────────────────────────────────────────────
+const ls = {
+  get(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+};
+
+function loadState() {
+  items     = ls.get("sf_items", []);
+  inventory = ls.get("sf_inventory", []);
+  locations = ls.get("sf_locations", locations);
+  types     = ls.get("sf_types", types);
+  ageThresholds = ls.get("sf_agethresh", ageThresholds);
+  scriptUrl = SCRIPT_URL;
+  ls.set("sf_script_url", SCRIPT_URL);
+  lastSync  = ls.get("sf_last_sync", null);
+  syncQueue = ls.get("sf_sync_queue", []);
+  // Gendan redaktør-tilstand hvis PIN matcher
+  const savedPin = ls.get("sf_editor_pin", null);
+  isEditor = (savedPin === EDITOR_PIN);
+}
+
+function saveState() {
+  ls.set("sf_items", items);
+  ls.set("sf_inventory", inventory);
+  ls.set("sf_locations", locations);
+  ls.set("sf_types", types);
+  ls.set("sf_agethresh", ageThresholds);
+  ls.set("sf_last_sync", lastSync);
+  ls.set("sf_sync_queue", syncQueue);
+}
+
+// ── Normalisering ──────────────────────────────────────────
+function getField(r, ...keys) {
+  for (const k of keys) {
+    const found = Object.keys(r).find(rk => rk.toLowerCase() === k.toLowerCase());
+    if (found !== undefined && r[found] !== undefined && r[found] !== "") return r[found];
+  }
+  return undefined;
+}
+
+function normalizeItems(rows) {
+  return (rows || []).map(r => {
+    const needRaw = getField(r, "Need", "need");
+    return {
+      id:   String(getField(r, "Item ID", "id") || ""),
+      name: String(getField(r, "Name", "name") || ""),
+      plads: String(getField(r, "Plads", "plads") || ""),
+      need: Number(needRaw === true || needRaw === "TRUE" || needRaw === 1 ? 1 : (needRaw || 0)),
+      wantToBuy: getField(r, "WantToBuy") === true || getField(r, "WantToBuy") === "TRUE" || false,
+      type: String(getField(r, "TYPE", "Type", "type") || "ANDET"),
+    };
+  }).filter(i => i.id && i.name);
+}
+
+function normalizeInventory(rows) {
+  return (rows || []).map(r => ({
+    id:       String(getField(r, "Inventory ID", "id") || ""),
+    itemId:   String(getField(r, "Item ID", "itemId") || ""),
+    dateTime: getField(r, "DateTime", "dateTime") || null,
+    amount:   Number(getField(r, "Amount", "amount") || 0),
+  })).filter(i => i.id && i.itemId);
+}
+
+// ── Computed ───────────────────────────────────────────────
+function getStockMap() {
+  const m = {};
+  inventory.forEach(inv => { m[inv.itemId] = (m[inv.itemId] || 0) + inv.amount; });
+  return m;
+}
+
+function getOldestDateMap() {
+  const map = {}, byItem = {};
+  inventory.forEach(inv => { if (!byItem[inv.itemId]) byItem[inv.itemId] = []; byItem[inv.itemId].push(inv); });
+  Object.entries(byItem).forEach(([itemId, txns]) => {
+    const sorted = [...txns].sort((a,b) => new Date(a.dateTime) - new Date(b.dateTime));
+    const queue = [];
+    sorted.forEach(({ dateTime, amount }) => {
+      if (amount > 0) queue.push({ date: dateTime, qty: amount });
+      else if (amount < 0) {
+        let rem = -amount;
+        while (rem > 0 && queue.length > 0) {
+          if (queue[0].qty <= rem) { rem -= queue[0].qty; queue.shift(); }
+          else { queue[0].qty -= rem; rem = 0; }
+        }
+      }
+    });
+    if (queue.length > 0) map[itemId] = queue[0].date;
+  });
+  return map;
+}
+
+function daysAgo(d) { return Math.floor((new Date() - new Date(d)) / 86400000); }
+function ageLabel(days) {
+  if (days === 0) return "I dag"; if (days === 1) return "I går";
+  if (days < 30) return days + " dage"; if (days < 365) return Math.floor(days/30) + " mdr";
+  return Math.floor(days/365) + "+ år";
+}
+function ageColor(days) {
+  if (days < ageThresholds.green)  return "#34d399";
+  if (days < ageThresholds.yellow) return "#fbbf24";
+  if (days < ageThresholds.orange) return "#f97316";
+  return "#ef4444";
+}
+
+function getEnrichedItems() {
+  const sm = getStockMap(), odm = getOldestDateMap();
+  return items.map(item => ({
+    ...item,
+    stock: sm[item.id] || 0,
+    oldestDate: odm[item.id] || null,
+    ageDays: odm[item.id] ? daysAgo(odm[item.id]) : null,
+  }));
+}
+
+function formatDate(d) {
+  const dt = new Date(d);
+  return `${dt.getDate()}/${dt.getMonth()+1}-${dt.getFullYear()} ${String(dt.getHours()).padStart(2,"0")}:${String(dt.getMinutes()).padStart(2,"0")}`;
+}
+function formatDateShort(d) {
+  const dt = new Date(d);
+  return `${dt.getDate()}/${dt.getMonth()+1}-${dt.getFullYear()}`;
+}
+
+// Datoformat som Google Sheets bruger: M/D/YYYY HH:MM:SS
+// Matcher det format AppSheet og Sheets selv skriver i DateTime-kolonnen.
+function nowSheetsFormat() {
+  const d = new Date();
+  return `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+}
+
+function generateId() {
+  return typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID()
+    : Math.random().toString(36).substring(2,10) + Date.now().toString(36);
+}
+
+// ── API ────────────────────────────────────────────────────
+async function syncFromSheet(url) {
+  const target = url || scriptUrl;
+  if (!target) return;
+  syncing = true;
+  const syncIcon = document.getElementById("sync-icon");
+  if (syncIcon) syncIcon.style.animation = "spin 1s linear infinite";
+  document.getElementById("sync-error").style.display = "none";
+  try {
+    const res = await fetch(`${target}?action=readAll`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || "Ukendt fejl");
+    const d = json.data;
+    const ni = normalizeItems(d.items);
+    const nv = normalizeInventory(d.inventory);
+    const nl = (d.locations||[]).map(r=>r["Plads"]||r["plads"]).filter(Boolean);
+    const nt = (d.types||[]).map(r=>r["Type"]||r["type"]).filter(Boolean);
+    const ns = {};
+    (d.settings||[]).forEach(r => {
+      const k = r["Key"]||r["key"]; const v = r["Value"]||r["value"];
+      if (k) ns[k] = v;
+    });
+    if (ni.length) items = ni;
+    if (nv.length) inventory = nv;
+    if (nl.length) locations = nl;
+    if (nt.length) types = nt;
+    if (ns.ageGreen)  ageThresholds.green  = Number(ns.ageGreen);
+    if (ns.ageYellow) ageThresholds.yellow = Number(ns.ageYellow);
+    if (ns.ageOrange) ageThresholds.orange = Number(ns.ageOrange);
+    lastSync = new Date().toISOString();
+    saveState();
+    showToast("Synkroniseret ✓", "positive");
+    document.getElementById("sync-status").textContent = "Synk: " + formatDate(lastSync);
+  } catch(err) {
+    document.getElementById("sync-error").style.display = "block";
+    document.getElementById("sync-error").textContent = "⚠ " + err.message;
+    showToast("Sync fejl: " + err.message, "negative");
+  } finally {
+    syncing = false;
+    const syncIcon = document.getElementById("sync-icon");
+    if (syncIcon) syncIcon.style.animation = "";
+    render();
+  }
+}
+
+async function postToSheet(action, payload) {
+  if (!scriptUrl) return;
+  try {
+    const res = await fetch(scriptUrl, { method: "POST", body: JSON.stringify({ action, payload, pin: EDITOR_PIN }), redirect: "follow" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error);
+  } catch {
+    syncQueue.push({ action, payload, _qid: generateId() });
+    ls.set("sf_sync_queue", syncQueue);
+  }
+}
+
+async function flushQueue() {
+  if (!scriptUrl || syncQueue.length === 0) return;
+  for (const op of [...syncQueue]) {
+    try {
+      const res = await fetch(scriptUrl, { method: "POST", body: JSON.stringify({ action: op.action, payload: op.payload, pin: EDITOR_PIN }), redirect: "follow" });
+      if (!res.ok) throw new Error();
+      syncQueue = syncQueue.filter(q => q._qid !== op._qid);
+    } catch { break; }
+  }
+  ls.set("sf_sync_queue", syncQueue);
+}
+
+// ── Actions ────────────────────────────────────────────────
+function addTransaction(itemId, amount) {
+  if (amount === 0) return;
+  const inv = { id: generateId(), itemId, dateTime: nowSheetsFormat(), amount };
+  inventory.push(inv);
+  postToSheet("appendInventory", { id: inv.id, itemId: inv.itemId, dateTime: inv.dateTime, amount: inv.amount });
+  const item = items.find(i => i.id === itemId);
+  showToast(`${amount > 0 ? "+" : ""}${amount} ${item?.name}`, amount > 0 ? "positive" : "negative");
+  saveState(); render();
+}
+
+function setMinimum(itemId, val) {
+  const clamped = Math.max(0, val);
+  items = items.map(i => i.id === itemId ? { ...i, need: clamped } : i);
+  postToSheet("updateItem", { id: itemId, need: clamped });
+  saveState(); render();
+}
+
+function moveItem(sourceId, targetPlads, amount) {
+  const source = items.find(i => i.id === sourceId);
+  if (!source) return;
+  const sm = getStockMap();
+  if (amount === undefined) amount = sm[sourceId] || 0;
+  if (amount <= 0) { showToast("Ikke nok på lager", "negative"); return; }
+  addTransaction(sourceId, -amount);
+  const dest = items.find(i => i.name === source.name && i.plads === targetPlads);
+  if (dest) {
+    addTransaction(dest.id, amount);
+  } else {
+    const newId = generateId();
+    const ni = { id: newId, name: source.name, plads: targetPlads, need: 0, wantToBuy: false, type: source.type };
+    items.push(ni);
+    postToSheet("appendItem", { id: ni.id, name: ni.name, plads: ni.plads, need: 0, type: ni.type });
+    const inv = { id: generateId(), itemId: newId, dateTime: nowSheetsFormat(), amount };
+    inventory.push(inv);
+    postToSheet("appendInventory", { id: inv.id, itemId: inv.itemId, dateTime: inv.dateTime, amount: inv.amount });
+  }
+  closeMoveModal();
+  showToast(`Flyttet ${amount} × ${source.name} → ${targetPlads}`, "positive");
+  saveState(); render();
+}
+
+function submitAddItem() {
+  const name = document.getElementById("new-name").value.trim();
+  if (!name) return;
+  const plads = document.getElementById("new-plads").value;
+  const type  = document.getElementById("new-type").value;
+  const amount = newItemState.amount;
+  const need   = newItemState.need;
+  const itemId = generateId();
+  const item = { id: itemId, name, plads, need, wantToBuy: false, type };
+  items.push(item);
+  postToSheet("appendItem", { id: item.id, name: item.name, plads: item.plads, need: item.need, type: item.type });
+  if (amount > 0) {
+    const inv = { id: generateId(), itemId, dateTime: nowSheetsFormat(), amount };
+    inventory.push(inv);
+    postToSheet("appendInventory", { id: inv.id, itemId: inv.itemId, dateTime: inv.dateTime, amount: inv.amount });
+  }
+  showToast(`${name} tilføjet`, "positive");
+  saveState();
+  closeAddItem();
+  render();
+}
+
+// ── Batch edit ────────────────────────────────────────────
+function openBatch(itemId, currentStock, event) {
+  if (event) event.stopPropagation();
+  adjustModeId = itemId;
+  batchEditId = itemId;
+  batchValue = currentStock;
+  render();
+  setTimeout(() => {
+    const el = document.getElementById("batch-input-" + itemId);
+    if (el) { el.focus(); el.select(); }
+  }, 50);
+}
+
+function adjustBatch(delta) {
+  batchValue = Math.max(0, batchValue + delta);
+  const el = document.getElementById("batch-input-" + batchEditId);
+  if (el) el.value = batchValue;
+  // opdater diff label
+  render();
+}
+
+function commitBatch(itemId, currentStock) {
+  const newVal = Math.max(0, batchValue);
+  const diff = newVal - currentStock;
+  if (diff !== 0) {
+    addTransaction(itemId, diff);
+  }
+  batchEditId = null;
+  render();
+}
+
+function closeBatch() {
+  batchEditId = null;
+  adjustModeId = null;
+  render();
+}
+
+// ── Toast ──────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg, type) {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.style.background = type === "positive" ? "rgba(52,211,153,0.95)" : type === "negative" ? "rgba(248,113,113,0.95)" : "rgba(56,189,248,0.95)";
+  el.style.display = "block";
+  el.style.animation = "fadeIn 0.2s ease";
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.style.display = "none"; }, 2200);
+}
+
+// ── View ───────────────────────────────────────────────────
+function setView(v) {
+  view = v; statModal = null; openGroupKey = null;
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("nav-" + v)?.classList.add("active");
+  adjustModeId = null; minEditId = null; batchEditId = null;
+  render();
+}
+function setStatModal(m) { statModal = m; render(); }
+
+// ── Render ─────────────────────────────────────────────────
+function render() {
+  const content = document.getElementById("content");
+  if (view === "overblik") content.innerHTML = renderOverblik();
+  else if (view === "oldest") content.innerHTML = renderOldest();
+  else if (view === "need") content.innerHTML = renderNeed();
+  else if (view === "history") content.innerHTML = renderHistory();
+  _applyOpenGroup();
+}
+
+function renderOverblik() {
+  const enriched = getEnrichedItems();
+  const search = document.getElementById("search-input")?.value.toLowerCase() || "";
+
+  // Stat-kort (4 på én linje)
+  let html = renderStatRow();
+
+  // Filter-chips: plads-chips normalt, type-chips ved groupBy=type
+  let source = enriched.filter(i => i.stock > 0);
+  if (search) source = source.filter(i => i.name.toLowerCase().includes(search) || i.plads.toLowerCase().includes(search) || i.type.toLowerCase().includes(search));
+
+  const usedLocations = [...new Set(source.map(i => i.plads))].sort();
+  html += `<div class="type-chips"><button class="type-chip${!typeFilter?' active':''}" style="${!typeFilter?'background:#38bdf8;color:#0a1628;border-color:#38bdf8':''}" onclick="setTypeFilter(null)">Alle</button>`;
+  if (groupBy === "type") {
+    types.forEach(t => {
+      const col = TYPE_COLORS[t] || "#6b7280";
+      const isActive = typeFilter === t;
+      html += `<button class="type-chip${isActive?' active':''}" style="${isActive?`background:${col};border-color:${col}`:'border-color:#2a4a6e'}" onclick="setTypeFilter('${t}')">${t}</button>`;
+    });
+  } else {
+    usedLocations.forEach(loc => {
+      const isActive = typeFilter === loc;
+      html += `<button class="type-chip${isActive?' active':''}" style="${isActive?'background:#38bdf8;color:#0a1628;border-color:#38bdf8':'border-color:#2a4a6e;font-family:Courier Prime,monospace'}" onclick="setTypeFilter('${loc}')">${loc}</button>`;
+    });
+  }
+  html += `</div>`;
+
+  html += `<div class="groupby-btns">
+    <button class="groupby-btn${groupBy==='plads'?' active':''}" onclick="setGroupBy('plads')">PLADS</button>
+    <button class="groupby-btn${groupBy==='type'?' active':''}" onclick="setGroupBy('type')">TYPE</button>
+    <button class="groupby-btn${groupBy==='name'?' active':''}" onclick="setGroupBy('name')">NAVN</button>
+  </div>`;
+
+  // Vareliste eller stat-modal-liste
+  html += `<div class="section-pad">`;
+
+  if (statModal === 'tomme') {
+    const tomme = enriched.filter(i => i.stock === 0);
+    html += `<div style="background:#0d1930;border-radius:12px;border:1px solid #2a4a6e;overflow:hidden">
+      <div style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;${tomme.length>0?'border-bottom:1px solid #1e3a5f':''}">
+        <span style="font-size:12px;font-weight:700;color:#f87171">Tomme varer (${tomme.length})</span>
+        <button onclick="setStatModal(null)" style="background:none;border:none;color:#c8daf0;cursor:pointer;font-size:16px;padding:2px 6px">✕</button>
+      </div>`;
+    tomme.forEach(item => {
+      const isBatchItem = batchEditId === item.id;
+      if (isBatchItem) {
+        // Vis fuldt item-kort med batch-panel
+        html += renderItemCard(item);
+      } else {
+        html += `<div style="padding:10px 14px;border-bottom:1px solid #1a2d4a;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:700;font-size:15px">${item.name}</div>
+            <div style="font-size:12px;color:#a8c4e0;font-family:'Courier Prime',monospace;font-weight:600;margin-top:2px">${item.type}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:'Courier Prime',monospace;font-size:17px;font-weight:700;color:#38bdf8">${item.plads}</span>
+            <span style="font-family:'Courier Prime',monospace;font-size:28px;font-weight:700;color:#f87171;cursor:pointer" onclick="openBatch('${item.id}',0,event)" title="Klik for at tilføje">0</span>
+          </div>
+        </div>`;
+      }
+    });
+    html += `</div>`;
+
+  } else if (statModal === 'mangler') {
+    const mangler = enriched.filter(i => i.need > 0 && i.stock < i.need);
+    html += `<div style="background:#0d1930;border-radius:12px;border:1px solid #2a4a6e;overflow:hidden">
+      <div style="padding:10px 14px;display:flex;justify-content:space-between;align-items:center;${mangler.length>0?'border-bottom:1px solid #1e3a5f':''}">
+        <span style="font-size:12px;font-weight:700;color:#fbbf24">Mangler (${mangler.length})</span>
+        <button onclick="setStatModal(null)" style="background:none;border:none;color:#c8daf0;cursor:pointer;font-size:16px;padding:2px 6px">✕</button>
+      </div>`;
+    mangler.forEach(item => {
+      html += `<div style="padding:10px 14px;border-bottom:1px solid #1a2d4a;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:700;font-size:15px">${item.name}</div>
+          <div style="font-size:12px;color:#38bdf8;font-family:'Courier Prime',monospace;font-weight:700">${item.plads}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:'Courier Prime',monospace;font-size:20px;font-weight:700;color:#fbbf24">${item.stock}</div>
+          <div style="font-size:13px;color:#c8daf0">min ${item.need}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+
+  } else {
+    // Normal vareliste
+    if (typeFilter) source = source.filter(i => groupBy === "type" ? i.type === typeFilter : i.plads === typeFilter);
+    if (source.length === 0) { html += `<div class="empty-state">Ingen varer på lager</div>`; }
+    else if (groupBy === "name") {
+      source.sort((a,b) => a.name.localeCompare(b.name, "da"));
+      source.forEach(item => { html += renderItemCard(item); });
+    } else {
+      const groups = {};
+      source.forEach(item => { const k = groupBy === "plads" ? item.plads : item.type; if (!groups[k]) groups[k] = []; groups[k].push(item); });
+      Object.entries(groups).sort(([a],[b]) => a.localeCompare(b,"da")).forEach(([key, arr]) => {
+        const col = groupBy === "type" ? (TYPE_COLORS[key] || "#6b7280") : "#0d2a4a";
+        const total = arr.reduce((s,i) => s+i.stock, 0);
+        html += `<div class="group-header" onclick="openGroup('${key}')">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="group-key" style="color:${col}">${key}</span>
+            <span class="group-meta">${arr.length} varer · ${total} stk</span>
+          </div>
+          <span id="chevron-${key}" style="transition:transform 0.2s;color:#7090a8;transform:rotate(-90deg)">▼</span>
+        </div>
+        <div id="group-${key}" style="display:none" onclick="event.stopPropagation()">`;
+        arr.sort((a,b) => a.name.localeCompare(b.name,"da")).forEach(item => { html += renderItemCard(item); });
+        html += `</div>`;
+      });
+    }
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function renderItemCard(item) {
+  const isAdjusting = adjustModeId === item.id || batchEditId === item.id;
+  const isMinEdit = minEditId === item.id;
+  const col = item.ageDays !== null ? ageColor(item.ageDays) : "#94a3b8";
+  const typeCol = TYPE_COLORS[item.type] || "#6b7280";
+  const stockCol = item.stock <= 0 ? "#f87171" : "#f1f5f9";
+  const buyActive = item.wantToBuy;
+
+  let html = `<div class="item-card">
+    <div class="item-row">
+      <div style="flex:1;min-width:0">
+        <div style="margin-bottom:3px"><span class="item-name">${item.name}</span></div>
+        <div class="item-meta">
+          <span class="item-type-badge" style="color:${typeCol};background:${typeCol}22">${item.type}</span>
+          ${item.ageDays !== null ? `<span class="item-age" style="color:${col}">⬤ ${ageLabel(item.ageDays)}</span>` : ""}
+          <div style="flex:1"></div>
+          ${item.need > 0 ? `<span class="item-min-text" style="color:${item.stock<item.need?'#fbbf24':'#c8daf0'}">min ${item.need}</span>` : ""}
+          ${isEditor ? `<button class="btn-sm adjust${isAdjusting?" active":""}" onclick="toggleAdjust('${item.id}')">Juster</button>` : ""}
+          <button class="item-buy-btn${buyActive?' active':''}" onclick="toggleWantToBuy('${item.id}')">${buyActive?'✓ KØB':'KØB'}</button>
+        </div>
+      </div>
+      <div class="item-actions">
+        ${isEditor ? `<button class="btn-sm" onclick="openMoveModal('${item.id}')">Flyt</button>` : ""}
+        <span class="item-plads-tag">${item.plads}</span>
+        <span class="item-stock" style="color:${stockCol}" ${isEditor ? `onclick="openBatch('${item.id}',${item.stock},event)" title="Klik for at justere"` : ""} >${item.stock}</span>
+      </div>
+    </div>`;
+
+  if (isAdjusting) {
+    const isBatch = batchEditId === item.id;
+    if (isBatch) {
+      html += `<div class="batch-row">
+        <button class="btn-stepper" onclick="adjustBatch(-1)">−</button>
+        <input class="batch-input" id="batch-input-${item.id}" type="number" value="${batchValue}" oninput="batchValue=Number(this.value)">
+        <button class="btn-stepper" onclick="adjustBatch(1)">+</button>
+        <span class="batch-label">stk på lager<br><span style="color:#c8daf0;font-size:10px">Diff: ${batchValue - item.stock >= 0 ? "+" : ""}${batchValue - item.stock}</span></span>
+        <button class="btn-batch-ok" onclick="commitBatch('${item.id}',${item.stock})">OK</button>
+        <button class="btn-batch-cancel" onclick="closeBatch()">✕</button>
+      </div>`;
+    } else {
+      html += `<div class="adjust-row">
+        <span style="font-size:13px;color:#c8daf0;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;align-self:center">Min:</span>
+        <button class="btn-stepper" onclick="setMinimum('${item.id}',${item.need-1})">−</button>
+        <span style="font-family:'Courier Prime',monospace;font-size:20px;font-weight:700;color:#f1f5f9;min-width:28px;text-align:center">${item.need}</span>
+        <button class="btn-stepper" onclick="setMinimum('${item.id}',${item.need+1})">+</button>
+        <span style="font-size:13px;color:#c8daf0;align-self:center">Klik på antal for at justere beholdning</span>
+      </div>`;
+    }
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderOldest() {
+  const enriched = getEnrichedItems().filter(i => i.stock > 0 && i.ageDays !== null)
+    .sort((a,b) => b.ageDays - a.ageDays);
+  let html = `<div class="section-pad"><div class="section-note">Ældste varer øverst — FIFO</div>`;
+  enriched.forEach(item => {
+    html += `<div style="background:#111d35;border-radius:12px;padding:8px 12px;margin-bottom:4px;border:1px solid #1e3a5f">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px">${item.name}</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-size:12px;color:#38bdf8;font-family:'Courier Prime',monospace;font-weight:700">${item.plads}</span>
+            <span style="font-size:13px;color:${ageColor(item.ageDays)};font-weight:600">⬤ ${ageLabel(item.ageDays)}</span>
+            <span style="font-size:13px;color:#c8daf0">${formatDateShort(item.oldestDate)}</span>
+          </div>
+        </div>
+        <div style="font-family:'Courier Prime',monospace;font-size:22px;font-weight:700;margin-left:12px;flex-shrink:0">${item.stock}</div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderNeed() {
+  const enriched = getEnrichedItems().filter(i => i.wantToBuy || (i.need > 0 && i.stock < i.need));
+  let html = `<div class="section-pad"><div class="section-note">Manuelt markerede + varer under minimum</div>`;
+  if (enriched.length === 0) html += `<div class="empty-state">Ingen varer til indkøb</div>`;
+  enriched.forEach(item => {
+    const below = item.need > 0 && item.stock < item.need;
+    html += `<div class="need-card${below?' below-min':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.name}</div>
+          <div style="font-size:12px;color:#38bdf8;font-family:'Courier Prime',monospace;font-weight:700;margin-top:2px">${item.plads} · ${item.type}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-left:12px;flex-shrink:0">
+          <button class="item-buy-btn${item.wantToBuy?' active':''}" onclick="toggleWantToBuy('${item.id}')">${item.wantToBuy?'✓ KØB':'KØB'}</button>
+          ${item.need > 0 ? `<span style="font-size:11px;color:${below?'#fbbf24':'#c8daf0'};font-family:'Courier Prime',monospace;font-weight:700">min ${item.need}</span>` : ""}
+        </div>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+function renderStatRow() {
+  const enriched = getEnrichedItems();
+  const totalItems = enriched.length;
+  const totalStock = enriched.reduce((s,i) => s + i.stock, 0);
+  const emptyCount = enriched.filter(i => i.stock === 0).length;
+  const needCount  = enriched.filter(i => i.need > 0 && i.stock < i.need).length;
+  return `<div class="stat-row">
+    <button class="stat-card" onclick="setView('overblik');document.getElementById('search-input').value='';render()" style="cursor:pointer;border:none">
+      <div class="stat-label">Varer</div>
+      <div class="stat-val" style="color:#38bdf8">${totalItems}</div>
+    </button>
+    <button class="stat-card" onclick="setView('history')" style="cursor:pointer;border:none">
+      <div class="stat-label">Stk</div>
+      <div class="stat-val" style="color:#34d399">${totalStock}</div>
+    </button>
+    <button class="stat-card${statModal==='tomme'?' active':''}" onclick="setView('overblik');setStatModal('tomme')">
+      <div class="stat-label">Tomme</div>
+      <div class="stat-val" style="color:${emptyCount>0?'#f87171':'#c8daf0'}">${emptyCount}</div>
+    </button>
+    <button class="stat-card${statModal==='mangler'?' active':''}" onclick="setView('overblik');setStatModal('mangler')">
+      <div class="stat-label">Mangler</div>
+      <div class="stat-val" style="color:${needCount>0?'#fbbf24':'#c8daf0'}">${needCount}</div>
+    </button>
+  </div>`;
+}
+
+function renderHistory() {
+  const recent = [...inventory].sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime)).slice(0,50);
+  let html = renderStatRow();
+  html += `<div class="section-pad"><div class="section-note">Seneste 50 transaktioner</div>`;
+  recent.forEach((tx, idx) => {
+    const item = items.find(i => i.id === tx.itemId);
+    const name = item?.name || "Ukendt";
+    const plads = item?.plads || "";
+    html += `<div class="history-row ${idx%2===0?'even':'odd'}">
+      <span class="history-date">${formatDateShort(tx.dateTime)}</span>
+      <span class="history-name">${name}</span>
+      ${plads ? `<span class="history-plads">${plads}</span>` : ""}
+      <span class="history-amount" style="color:${tx.amount>0?"#34d399":"#f87171"}">${tx.amount>0?"+":""}${tx.amount}</span>
+    </div>`;
+  });
+  html += `</div>`;
+  return html;
+}
+
+// ── UI helpers ─────────────────────────────────────────────
+function setTypeFilter(t) { typeFilter = t; render(); }
+function setGroupBy(g) { groupBy = g; typeFilter = null; openGroupKey = null; render(); }
+function toggleWantToBuy(itemId) {
+  items = items.map(i => i.id === itemId ? { ...i, wantToBuy: !i.wantToBuy } : i);
+  postToSheet("updateItem", { id: itemId, wantToBuy: items.find(i=>i.id===itemId)?.wantToBuy });
+  saveState(); render();
+}
+function toggleAdjust(id) { adjustModeId = adjustModeId === id ? null : id; minEditId = null; batchEditId = null; render(); }
+function toggleMinEdit(id) { minEditId = minEditId === id ? null : id; render(); }
+function openGroup(key) {
+  openGroupKey = key;
+  _applyOpenGroup();
+}
+function _applyOpenGroup() {
+  document.querySelectorAll("[id^='group-']").forEach(g => { g.style.display = "none"; });
+  document.querySelectorAll("[id^='chevron-']").forEach(c => { c.style.transform = "rotate(-90deg)"; });
+  if (openGroupKey) {
+    const el = document.getElementById("group-" + openGroupKey);
+    const ch = document.getElementById("chevron-" + openGroupKey);
+    if (el) el.style.display = "";
+    if (ch) ch.style.transform = "";
+  }
+}
+function toggleGroup(key) { openGroup(key); }
+
+function openMoveModal(itemId) {
+  moveItemId = itemId;
+  const item = getEnrichedItems().find(i => i.id === itemId);
+  if (!item) return;
+  document.getElementById("move-subtitle").textContent = `${item.name} · nu på ${item.plads} · ${item.stock} stk`;
+  const grid = document.getElementById("move-grid");
+  grid.innerHTML = locations.map(loc => `<button class="move-btn${loc===item.plads?" current":""}" ${loc===item.plads?"disabled":""} onclick="moveItem('${itemId}','${loc}',${item.stock})">${loc}</button>`).join("");
+  document.getElementById("modal-move").style.display = "flex";
+}
+function closeMoveModal() { document.getElementById("modal-move").style.display = "none"; moveItemId = null; }
+
+function openAddItem() {
+  newItemState = { amount: 1, need: 0 };
+  document.getElementById("new-name").value = "";
+  const ps = document.getElementById("new-plads"); ps.innerHTML = locations.map(l => `<option>${l}</option>`).join("");
+  const ts = document.getElementById("new-type"); ts.innerHTML = types.map(t => `<option>${t}</option>`).join("");
+  document.getElementById("new-amount-val").textContent = "1";
+  document.getElementById("new-need-val").textContent = "0";
+  document.getElementById("new-need-val").style.color = "#94a3b8";
+  updateAddBtn();
+  document.getElementById("modal-add").style.display = "flex";
+  setTimeout(() => document.getElementById("new-name").focus(), 100);
+}
+function closeAddItem() { document.getElementById("modal-add").style.display = "none"; }
+function adjustNew(field, delta) {
+  newItemState[field] = Math.max(0, (newItemState[field] || 0) + delta);
+  document.getElementById(`new-${field}-val`).textContent = newItemState[field];
+  if (field === "need") document.getElementById("new-need-val").style.color = newItemState.need > 0 ? "#fbbf24" : "#94a3b8";
+}
+function updateAddBtn() {
+  const name = document.getElementById("new-name")?.value.trim();
+  const btn = document.getElementById("btn-submit-add");
+  if (!btn) return;
+  if (name) { btn.className = "btn-submit ready"; btn.disabled = false; }
+  else { btn.className = "btn-submit disabled"; btn.disabled = true; }
+}
+
+// ── Settings ───────────────────────────────────────────────
+function openSettings() {
+  renderSettingsContent();
+  document.getElementById("modal-settings").style.display = "flex";
+}
+
+function submitPin() {
+  const val = document.getElementById("si-pin")?.value || "";
+  if (val === EDITOR_PIN) {
+    isEditor = true;
+    ls.set("sf_editor_pin", val);
+    updateEditorUI();
+    renderSettingsContent();
+  } else {
+    document.getElementById("pin-error").style.display = "block";
+  }
+}
+
+function logoutEditor() {
+  isEditor = false;
+  ls.set("sf_editor_pin", null);
+  updateEditorUI();
+  renderSettingsContent();
+}
+
+function updateEditorUI() {
+  // + Vare knap
+  const addBtn = document.getElementById("btn-add-item");
+  if (addBtn) addBtn.style.display = isEditor ? "" : "none";
+  // Re-render indhold så Juster/Flyt/Min vises/skjules
+  render();
+}
+function closeSettings() { document.getElementById("modal-settings").style.display = "none"; }
+function setSettingsTab(t) {
+  settingsTab = t;
+  document.querySelectorAll(".settings-tab").forEach(b => b.classList.remove("active"));
+  document.getElementById("stab-" + t)?.classList.add("active");
+  renderSettingsContent();
+}
+
+function renderSettingsContent() {
+  const el = document.getElementById("settings-content");
+  if (settingsTab === "generelt") {
+    // PIN-sektion — vises altid, redaktør-indstillinger kun hvis isEditor
+    const pinSection = isEditor
+      ? `<div style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.25);border-radius:10px;padding:12px;margin-bottom:16px">
+           <div style="font-size:14px;color:#34d399;font-weight:700;margin-bottom:4px">✓ Redaktør aktiv</div>
+           <div style="font-size:13px;color:#c8daf0;margin-bottom:8px">Du kan redigere og justere beholdning.</div>
+           <button onclick="logoutEditor()" style="padding:6px 12px;background:#172642;color:#f87171;border:1px solid rgba(248,113,113,0.3);border-radius:8px;font-size:14px;cursor:pointer">Log ud som redaktør</button>
+         </div>`
+      : `<div style="margin-bottom:16px">
+           <div class="settings-label">Redaktør-PIN</div>
+           <div style="display:flex;gap:8px">
+             <input class="settings-input" id="si-pin" type="password" placeholder="Indtast PIN..." style="flex:1;letter-spacing:4px" onkeydown="if(event.key==='Enter')submitPin()">
+             <button onclick="submitPin()" style="padding:10px 14px;background:#38bdf8;color:#fff;border-radius:8px;font-size:13px;cursor:pointer">OK</button>
+           </div>
+           <div id="pin-error" style="font-size:13px;color:#f87171;margin-top:5px;display:none">Forkert PIN</div>
+           <div class="settings-hint">Indtast PIN for at aktivere redigering på denne enhed.</div>
+         </div>`;
+
+    el.innerHTML = pinSection + `
+      <div class="settings-label">Apps Script URL</div>
+      <input class="settings-input" id="si-url" value="${scriptUrl}" placeholder="https://script.google.com/macros/s/...">
+      <div class="settings-hint">URL er præ-indsat. Ret kun ved ny deploy.</div>
+      <button class="btn-primary" onclick="saveScriptUrl()" style="margin-bottom:20px">Gem og synkroniser</button>
+      <div class="sync-divider">
+        <div style="font-size:13px;color:#f1f5f9;margin-bottom:4px">Sidst synkroniseret: <span style="color:#38bdf8">${lastSync ? formatDate(lastSync) : "Aldrig"}</span></div>
+        ${syncQueue.length > 0 ? `<div style="font-size:13px;color:#fbbf24;margin-bottom:8px">${syncQueue.length} afventende i offline-kø</div>` : ""}
+        <button class="btn-primary" onclick="syncFromSheet()">Synkroniser nu</button>
+      </div>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid #1e3a5f;font-size:13px;color:#7090a8">
+        SunesMad <span style="font-family:'Courier Prime',monospace;color:#38bdf8">${APP_VERSION}</span>
+      </div>`;
+  } else if (settingsTab === "pladser") {
+    let rows = locations.map(loc => {
+      const count = items.filter(i => i.plads === loc).length;
+      return `<tr><td class="td-key">${loc}</td><td class="td-count">${count} varer</td><td style="text-align:right"><button class="btn-del" style="color:${count>0?"#90b0cc":"#ef4444"}" ${count>0?"disabled":""} onclick="deleteLocation('${loc}')">✕</button></td></tr>`;
+    }).join("");
+    el.innerHTML = `<table class="settings-table"><tbody>${rows}</tbody></table>
+      <div class="add-row">
+        <input class="add-input" id="si-new-loc" placeholder="Ny plads, f.eks. UDE5" onkeydown="if(event.key==='Enter')addLocation()">
+        <button class="btn-add" onclick="addLocation()">Tilføj</button>
+      </div>`;
+  } else if (settingsTab === "typer") {
+    let rows = types.map(t => {
+      const count = items.filter(i => i.type === t).length;
+      const col = TYPE_COLORS[t] || "#6b7280";
+      return `<tr><td><span style="font-size:16px;font-weight:700;color:${col};background:${col}22;padding:3px 10px;border-radius:6px">${t}</span></td><td class="td-count">${count} varer</td><td style="text-align:right"><button class="btn-del" style="color:${count>0?"#90b0cc":"#ef4444"}" ${count>0?"disabled":""} onclick="deleteType('${t}')">✕</button></td></tr>`;
+    }).join("");
+    el.innerHTML = `<table class="settings-table"><tbody>${rows}</tbody></table>
+      <div class="add-row">
+        <input class="add-input" id="si-new-type" placeholder="Ny type, f.eks. DESSERT" onkeydown="if(event.key==='Enter')addType()">
+        <button class="btn-add" onclick="addType()">Tilføj</button>
+      </div>`;
+  } else if (settingsTab === "alder") {
+    const bands = [
+      { key:"green",  color:"#34d399", label:"Grøn — frisk" },
+      { key:"yellow", color:"#fbbf24", label:"Gul — ok" },
+      { key:"orange", color:"#f97316", label:"Orange — gammelt" },
+    ];
+    let html = `<div style="font-size:13px;color:#c8daf0;margin-bottom:14px">Farven viser alder af ældste enhed (FIFO).</div>`;
+    bands.forEach(b => {
+      const months = Math.round(ageThresholds[b.key] / 30);
+      html += `<div class="age-band-row">
+        <div class="age-dot" style="background:${b.color}"></div>
+        <div class="age-label">${b.label}</div>
+        <div class="age-stepper">
+          <button class="stepper-btn" onclick="updateThreshold('${b.key}',-1)">−</button>
+          <span class="age-val" style="color:${b.color}">${months} mdr</span>
+          <button class="stepper-btn" onclick="updateThreshold('${b.key}',1)">+</button>
+        </div>
+      </div>`;
+    });
+    html += `<button onclick="resetThresholds()" style="margin-top:14px;padding:7px 14px;font-size:13px;background:#172642;color:#c8daf0;border:1px solid #2a4a6e;border-radius:7px;cursor:pointer">Nulstil (1/3/6 mdr)</button>`;
+    el.innerHTML = html;
+  }
+}
+
+function saveScriptUrl() {
+  const url = document.getElementById("si-url")?.value.trim();
+  if (!url) return;
+  scriptUrl = url; ls.set("sf_script_url", url);
+  showToast("Script URL gemt", "positive");
+  syncFromSheet(url);
+}
+function addLocation() {
+  const val = document.getElementById("si-new-loc")?.value.trim().toUpperCase();
+  if (!val || locations.includes(val)) return;
+  locations.push(val); saveState();
+  postToSheet("appendLocation", { plads: val });
+  showToast(`Plads ${val} tilføjet`, "positive");
+  renderSettingsContent();
+}
+function deleteLocation(name) {
+  if (items.some(i => i.plads === name)) { showToast(`${name} er i brug`, "negative"); return; }
+  locations = locations.filter(l => l !== name); saveState();
+  showToast(`${name} slettet`, "info"); renderSettingsContent();
+}
+function addType() {
+  const val = document.getElementById("si-new-type")?.value.trim().toUpperCase();
+  if (!val || types.includes(val)) return;
+  types.push(val); saveState();
+  postToSheet("appendType", { type: val });
+  showToast(`Type ${val} tilføjet`, "positive");
+  renderSettingsContent();
+}
+function deleteType(name) {
+  if (items.some(i => i.type === name)) { showToast(`${name} er i brug`, "negative"); return; }
+  types = types.filter(t => t !== name); saveState();
+  showToast(`${name} slettet`, "info"); renderSettingsContent();
+}
+function updateThreshold(key, delta) {
+  const months = Math.max(1, Math.round(ageThresholds[key] / 30) + delta);
+  const days = months * 30;
+  ageThresholds = { ...ageThresholds, [key]: days };
+  if (key==="green"  && ageThresholds.green  >= ageThresholds.yellow) ageThresholds.yellow = ageThresholds.green + 30;
+  if (key==="yellow" && ageThresholds.yellow >= ageThresholds.orange) ageThresholds.orange = ageThresholds.yellow + 30;
+  if (key==="yellow" && ageThresholds.yellow <= ageThresholds.green)  ageThresholds.green  = ageThresholds.yellow - 30;
+  if (key==="orange" && ageThresholds.orange <= ageThresholds.yellow) ageThresholds.yellow = ageThresholds.orange - 30;
+  ls.set("sf_agethresh", ageThresholds);
+  postToSheet("upsertSetting", { key: "ageGreen",  value: ageThresholds.green });
+  postToSheet("upsertSetting", { key: "ageYellow", value: ageThresholds.yellow });
+  postToSheet("upsertSetting", { key: "ageOrange", value: ageThresholds.orange });
+  renderSettingsContent();
+}
+function resetThresholds() {
+  ageThresholds = { green: 30, yellow: 90, orange: 180 };
+  ls.set("sf_agethresh", ageThresholds);
+  postToSheet("upsertSetting", { key: "ageGreen",  value: 30 });
+  postToSheet("upsertSetting", { key: "ageYellow", value: 90 });
+  postToSheet("upsertSetting", { key: "ageOrange", value: 180 });
+  renderSettingsContent();
+}
+
+// ── Init ───────────────────────────────────────────────────
+loadState();
+updateEditorUI();
+if (lastSync) document.getElementById("sync-status").textContent = "Synk: " + formatDate(lastSync);
+render();
+syncFromSheet(scriptUrl);
+window.addEventListener("focus", flushQueue);
+</script>
+</body>
+</html>
